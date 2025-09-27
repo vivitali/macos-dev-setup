@@ -80,7 +80,7 @@ Complete development environment for full-stack developers:
 - Zoom (video conferencing)
 
 **Shell Improvements:**
-- Modern CLI tools: bat, exa, fzf, ripgrep, tree, htop, jq
+- Modern CLI tools: bat, fzf, ripgrep, tree, htop, jq
 - HTTP tools: httpie, wget
 
 **Project Structure:**
@@ -188,7 +188,6 @@ Default mode that asks for confirmation before each installation, allowing you t
 
 ### Shell Improvements (Full Mode)
 - `bat` - better cat
-- `exa` - modern ls
 - `fzf` - fuzzy finder
 - `ripgrep` - fast grep
 - `tree` - directory tree

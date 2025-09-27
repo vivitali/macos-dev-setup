@@ -476,12 +476,6 @@ Modern replacement for `cat`:
 - Paging support
 - File type detection
 
-### exa
-**Package:** `exa`  
-**Installed in:** Full mode, Interactive (optional)  
-**Purpose:** Modern ls replacement  
-**Website:** [the.exa.website](https://the.exa.website/)
-
 Improved directory listing:
 - Colorful output
 - Git status integration
