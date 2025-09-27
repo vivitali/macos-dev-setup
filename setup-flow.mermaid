@@ -1,0 +1,118 @@
+flowchart TD
+    A[🚀 Start Setup Script] --> B{Parse Arguments}
+    
+    B --> C[--auto-minimal]
+    B --> D[--auto-full]
+    B --> E[--interactive / default]
+    B --> F[--help]
+    
+    F --> G[Show Help & Exit]
+    
+    C --> H[Set Minimal Mode]
+    D --> I[Set Full Mode]
+    E --> J[Set Interactive Mode]
+    
+    H --> K[Set Default Editor: VSCode]
+    I --> L[Set Default Editors: VSCode + Cursor]
+    J --> M[🎯 Editor Selection Menu]
+    
+    K --> N[Skip Database Selection]
+    L --> O[Set Default DBs: PostgreSQL + MongoDB]
+    M --> P[📊 Database Selection Menu]
+    
+    N --> Q[📋 Show Installation Preview]
+    O --> Q
+    P --> Q
+    
+    Q --> R{User Confirms?}
+    R -->|No| S[❌ Exit Script]
+    R -->|Yes| T[🔧 Core Setup Phase]
+    
+    T --> U[Install Xcode Command Line Tools]
+    U --> V[Install Homebrew]
+    V --> W[Setup Git + Configuration]
+    W --> X[Install Oh My Zsh]
+    X --> Y[Setup NVM + Node.js LTS]
+    
+    Y --> Z{Check Mode}
+    
+    Z -->|Minimal| AA[Skip Python Setup]
+    Z -->|Full/Interactive| BB[Setup Python 3.12 + pipenv]
+    
+    AA --> CC[Install Selected Editors]
+    BB --> CC
+    
+    CC --> DD[Setup Browsers]
+    DD --> EE{Check Mode}
+    
+    EE -->|Minimal| FF[Install Chrome Only]
+    EE -->|Full/Interactive| GG[Install Chrome + Firefox Dev]
+    
+    FF --> HH[Skip Dev Tools]
+    GG --> II[🛠 Development Tools Phase]
+    
+    HH --> JJ[Skip Claude Code]
+    II --> KK[Install Claude Code]
+    II --> LL[Install Docker, Postman, Bruno]
+    II --> MM[Install Rectangle, Raycast, etc.]
+    
+    JJ --> NN[Skip Shell Improvements]
+    KK --> OO[Setup Shell Improvements]
+    LL --> OO
+    MM --> OO
+    
+    NN --> PP{Any Databases Selected?}
+    OO --> QQ[Install bat, exa, fzf, ripgrep, etc.]
+    QQ --> PP
+    
+    PP -->|No| RR[Skip Database Setup]
+    PP -->|Yes| SS[🗄 Database Installation]
+    
+    SS --> TT[Install Selected Databases]
+    TT --> UU[Install TablePlus + MongoDB Compass]
+    UU --> VV[Start Database Services]
+    
+    RR --> WW[Create ~/Projects Structure]
+    VV --> WW
+    
+    WW --> XX{Mode Check}
+    
+    XX -->|Minimal| YY[Skip SSH Setup]
+    XX -->|Full/Interactive| ZZ[Setup SSH Key for GitHub]
+    
+    YY --> AAA{Auto Mode?}
+    ZZ --> AAA
+    
+    AAA -->|Yes| BBB[🔄 Ask Continue Setup?]
+    AAA -->|No| CCC[🧹 Cleanup Phase]
+    
+    BBB -->|Yes| DDD[Switch to Interactive Mode]
+    BBB -->|No| CCC
+    
+    DDD --> EEE[🎨 Additional Setup Phase]
+    EEE --> FFF[Additional Editors Menu]
+    FFF --> GGG[Additional Browsers Menu]
+    GGG --> HHH[Additional Dev Tools Menu]
+    HHH --> III[Additional Productivity Menu]
+    
+    III --> CCC
+    
+    CCC --> JJJ[brew cleanup]
+    JJJ --> KKK[🎉 Setup Complete!]
+    
+    KKK --> LLL[Show Next Steps]
+    LLL --> MMM[📝 Display Final Instructions]
+    MMM --> NNN[✅ End]
+    
+    %% Styling
+    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef decision fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef phase fill:#e8f5e8,stroke:#1b5e20,stroke-width:3px
+    classDef optional fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    
+    class A,G,S,NNN startEnd
+    class B,R,Z,EE,PP,XX,AAA,BBB decision
+    class U,V,W,X,Y,CC,DD,TT,UU,VV,WW,JJJ process
+    class T,II,SS,EEE,CCC phase
+    class FFF,GGG,HHH,III optional
