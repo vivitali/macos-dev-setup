@@ -200,13 +200,71 @@ EOF
   ok "~/.zshrc updated"
 }
 
-# ---- projects dir -----------------------------------------------------------
-make_projects(){
-  if [ -d "$HOME/Projects" ]; then ok "~/Projects exists"; return; fi
-  if confirm "Create ~/Projects/{personal,work,opensource,learning}?"; then
-    mkdir -p "$HOME"/Projects/{personal,work,opensource,learning}
-    ok "Projects dirs created"
-  fi
+# ---- folder structure (code + life via PARA) -------------------------------
+print_folder_recommendations(){
+  cat <<'EOF'
+
+  -- How to use your folders --------------------------------------------------
+  CODE  (~/Developer)  keep code OUT of iCloud/Documents (sync + node_modules pain)
+    clone into work/ personal/ oss/ learning/ ; spikes -> sandbox/ ; dead -> archive/
+  DOCS  (~/Documents, PARA)  organize by ACTIONABILITY, not topic
+    00-Inbox     default dump; process to empty weekly
+    01-Projects  has a deadline/goal -> when done, move to 04-Archive
+    02-Areas     life you maintain (Finances, Health, Home, Career, Personal)
+    03-Resources reference you consult (templates, docs, inspiration)
+    04-Archive   cold storage; still searchable
+  HABITS
+    ~/Downloads = inbox, not storage -- clear it weekly
+    name dated files: YYYY-MM-DD_name_vN
+    use Finder Tags (Current/Waiting) + Smart Folders to cut across PARA
+    back up: Time Machine (docs) + git remotes (code)
+  Full guide: FOLDERS.md in this repo
+  ----------------------------------------------------------------------------
+EOF
+}
+
+make_folders(){
+  confirm "Create folder structure (~/Developer + ~/Documents PARA)?" || return
+  local code="$HOME/Developer" docs="$HOME/Documents"
+
+  # Code (local only, never iCloud-synced)
+  mkdir -p "$code"/{work,personal,oss,learning,sandbox,archive}
+
+  # Life + work docs (iCloud-syncable): PARA + Inbox, numbered for auto-sort
+  mkdir -p "$docs"/00-Inbox "$docs"/01-Projects \
+           "$docs"/02-Areas/{Career,Finances,Health,Home,Personal} \
+           "$docs"/03-Resources "$docs"/04-Archive
+
+  # Self-documenting READMEs (never clobber existing files)
+  [ -e "$code/README.md" ] || cat > "$code/README.md" <<'EOF'
+# ~/Developer — source code only (keep OUT of iCloud)
+
+- work/      employer & client repos
+- personal/  your own projects
+- oss/       open-source clones & forks
+- learning/  courses, tutorials, katas
+- sandbox/   throwaway spikes (delete freely)
+- archive/   dormant repos you might revisit
+
+Conventions: kebab-case repo names, one repo = one folder.
+Back up via git remotes, not Time Machine alone.
+EOF
+  [ -e "$docs/README.md" ] || cat > "$docs/README.md" <<'EOF'
+# ~/Documents — PARA (organize by actionability)
+
+- 00-Inbox/     drop anything here; sort weekly to empty
+- 01-Projects/  active efforts WITH a finish line (work + life)
+- 02-Areas/     ongoing responsibilities, NO end date
+                (Career, Finances, Health, Home, Personal)
+- 03-Resources/ reference material & topics of interest
+- 04-Archive/   finished/inactive items from the three above
+
+Move a Project to 04-Archive when done.
+Dated files: YYYY-MM-DD_name_vN.
+EOF
+
+  ok "Folders created (~/Developer, ~/Documents PARA)"
+  print_folder_recommendations
 }
 
 # ---- ssh key ----------------------------------------------------------------
@@ -255,7 +313,7 @@ main(){
   setup_claude_code
   setup_serena
   write_shell_config
-  make_projects
+  make_folders
   setup_ssh
   mobile_postinstall
   printf "\n"; ok "Done."

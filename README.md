@@ -69,6 +69,15 @@ Minimal = no redundancy, free, low maintenance.
 - **Postgres** isn't auto-started (saves battery). Start it when needed:
   `brew services start postgresql@17`.
 
+## Folder structure (work + life)
+
+`setup.sh` offers to scaffold a fresh-Mac folder system: **`~/Developer`** for source
+(local + git, never iCloud) and **`~/Documents`** organized by **PARA**
+(00-Inbox / 01-Projects / 02-Areas / 03-Resources / 04-Archive). It drops a short
+README into each root and prints usage tips. `~/Developer` even gets a macOS hammer
+icon. Full rationale + "where do I put X?"
+table in **[FOLDERS.md](FOLDERS.md)**.
+
 ## Post-install
 
 ```bash

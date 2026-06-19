@@ -98,8 +98,14 @@ MongoDB Compass · Cursor · Obsidian · Slack · Zoom.
 Homebrew, starship, nvm, Go/Android PATH, fzf, eza aliases, and zsh plugins. Re-running
 is safe — it won't duplicate the block.
 
-## Project structure
+## Folder structure (work + life)
+
+`setup.sh` offers to scaffold:
 
 ```
-~/Projects/{personal,work,opensource,learning}
+~/Developer/   work, personal, oss, learning, sandbox, archive   (local + git, hammer icon)
+~/Documents/   00-Inbox 01-Projects 02-Areas 03-Resources 04-Archive  (PARA, iCloud)
 ```
+
+Code is kept out of iCloud (sync + node_modules); docs use the PARA method (organize
+by actionability). See **[FOLDERS.md](FOLDERS.md)** for the full guide.
