@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BREWFILE="$SCRIPT_DIR/Brewfile"
 ASSUME_YES=false
 SKIP_BUNDLE=false
+SUDO_PID=""
 
 # ---- args -------------------------------------------------------------------
 while [ $# -gt 0 ]; do
@@ -49,6 +50,10 @@ confirm(){ # $1 = prompt
 [ "$(uname)" = Darwin ] || { err "macOS only."; exit 1; }
 [ "$(id -u)" -ne 0 ]   || { err "Do not run as root."; exit 1; }
 
+# kill the sudo keep-alive (if any) when the script exits
+cleanup(){ [ -n "${SUDO_PID:-}" ] && kill "$SUDO_PID" 2>/dev/null || true; }
+trap cleanup EXIT
+
 # ---- xcode command line tools ----------------------------------------------
 install_clt(){
   if xcode-select -p >/dev/null 2>&1; then ok "Xcode Command Line Tools"; return; fi
@@ -70,13 +75,129 @@ install_brew(){
 }
 
 # ---- brew bundle (the apps) -------------------------------------------------
+# Interactive runs install one item at a time behind a live progress bar +
+# spinner, so a long cask download never looks like a frozen terminal. You
+# always see "[k/N]", which app, and elapsed seconds. Unattended (--yes) or a
+# non-TTY falls back to plain `brew bundle` (fully scriptable, no live UI).
+
+# Cache sudo up front so a cask that needs it (e.g. a .pkg like temurin) can't
+# hang on a hidden password prompt while it installs in the background.
+prime_sudo(){
+  $ASSUME_YES && return 0
+  [ -t 0 ] || return 0
+  sudo -n true 2>/dev/null && return 0
+  info "Some casks may ask for your macOS password — caching it now."
+  sudo -v || { warn "No cached sudo; a cask needing it may pause for a prompt."; return 0; }
+  ( while true; do sudo -n true 2>/dev/null; sleep 50; kill -0 "$$" 2>/dev/null || exit 0; done ) &
+  SUDO_PID=$!
+}
+
+draw_bar(){ # $1=current $2=total -> "[████░░░░░░] 40% (4/10)"
+  local cur="$1" tot="$2" w=20 i fill pct s=""
+  [ "$tot" -gt 0 ] || tot=1
+  fill=$(( cur * w / tot )); pct=$(( cur * 100 / tot ))
+  for ((i=0; i<fill; i++)); do s+="█"; done
+  for ((i=fill; i<w; i++)); do s+="░"; done
+  printf "%s[%s]%s %3d%% %s(%d/%d)%s" "$c_green" "$s" "$c_nc" "$pct" "$c_blue" "$cur" "$tot" "$c_nc"
+}
+
+# Animate a spinner while a no-prompt command runs in the background.
+spin(){ # $1=label ; rest=command
+  local label="$1"; shift
+  local logf rc=0 start k=0
+  local -a F=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+  if [ ! -t 1 ]; then info "$label..."; "$@" >/dev/null 2>&1 || true; ok "$label"; return 0; fi
+  logf="$(mktemp)"; start=$SECONDS
+  "$@" >"$logf" 2>&1 &
+  local pid=$!
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r%s%s%s %s %s(%ds)%s   " "$c_blue" "${F[$((k%10))]}" "$c_nc" "$label" "$c_yellow" "$((SECONDS-start))" "$c_nc"
+    k=$((k+1)); sleep 0.1
+  done
+  wait "$pid" || rc=$?
+  printf "\r%s[ok]%s %s (%ds)%-12s\n" "$c_green" "$c_nc" "$label" "$((SECONDS-start))" ""
+  rm -f "$logf"; return 0
+}
+
+# Parse uncommented brew/cask/mas entries from the Brewfile -> BF_TYPES/BF_NAMES.
+parse_brewfile(){
+  BF_TYPES=(); BF_NAMES=()
+  local raw t n
+  while IFS= read -r raw || [ -n "$raw" ]; do
+    raw="${raw%%#*}"                                              # drop comments
+    raw="$(printf '%s' "$raw" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    [ -z "$raw" ] && continue
+    case "$raw" in
+      'brew "'*) t="brew"; n="$(printf '%s' "$raw" | sed -E 's/^brew[[:space:]]+"([^"]+)".*/\1/')" ;;
+      'cask "'*) t="cask"; n="$(printf '%s' "$raw" | sed -E 's/^cask[[:space:]]+"([^"]+)".*/\1/')" ;;
+      'mas '*)   t="mas";  n="$(printf '%s' "$raw" | sed -E 's/.*id:[[:space:]]*([0-9]+).*/\1/')" ;;
+      *) continue ;;
+    esac
+    [ -n "$n" ] && { BF_TYPES+=("$t"); BF_NAMES+=("$n"); }
+  done < "$BREWFILE"
+}
+
+# Install one item in the background, animating bar+spinner until it finishes.
+install_item(){ # $1=type $2=name $3=current $4=total
+  local t="$1" n="$2" cur="$3" tot="$4" logf rc=0 start k=0
+  local -a F=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+  logf="$(mktemp)"; start=$SECONDS
+  case "$t" in
+    brew) brew install "$n"        >"$logf" 2>&1 & ;;
+    cask) brew install --cask "$n" >"$logf" 2>&1 & ;;
+    mas)  mas install "$n"         >"$logf" 2>&1 & ;;
+  esac
+  local pid=$!
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r%s %s%s%s %-26.26s %s%ds%s   " "$(draw_bar "$cur" "$tot")" \
+      "$c_blue" "${F[$((k%10))]}" "$c_nc" "$n" "$c_yellow" "$((SECONDS-start))" "$c_nc"
+    k=$((k+1)); sleep 0.1
+  done
+  wait "$pid" || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf "\r%s %s✓%s %-26.26s %s(%ds)%s%-10s\n" "$(draw_bar "$cur" "$tot")" "$c_green" "$c_nc" "$n" "$c_yellow" "$((SECONDS-start))" "$c_nc" ""
+  else
+    printf "\r%s %s✗%s %-26.26s %sFAILED%s%-10s\n" "$(draw_bar "$cur" "$tot")" "$c_red" "$c_nc" "$n" "$c_red" "$c_nc" ""
+    tail -n 4 "$logf" 2>/dev/null | sed 's/^/      /'
+  fi
+  rm -f "$logf"; return "$rc"
+}
+
 run_bundle(){
   $SKIP_BUNDLE && { warn "Skipping brew bundle"; return; }
   [ -f "$BREWFILE" ] || { err "Brewfile not found at $BREWFILE"; exit 1; }
-  info "Installing from Brewfile (large casks: Android Studio, Flutter)..."
-  brew update || true
-  brew bundle --file="$BREWFILE" || warn "Some Brewfile items failed; continuing."
-  ok "Brewfile processed"
+
+  spin "Updating Homebrew" brew update
+
+  # Unattended or non-interactive: plain brew bundle (no live UI).
+  if $ASSUME_YES || [ ! -t 1 ]; then
+    info "Installing from Brewfile (large casks: Android Studio, Flutter)..."
+    brew bundle --file="$BREWFILE" || warn "Some Brewfile items failed; continuing."
+    ok "Brewfile processed"; return
+  fi
+
+  parse_brewfile
+  local total=${#BF_NAMES[@]}
+  if [ "$total" -eq 0 ]; then
+    warn "Could not parse Brewfile; falling back to brew bundle."
+    brew bundle --file="$BREWFILE" || warn "Some Brewfile items failed; continuing."
+    ok "Brewfile processed"; return
+  fi
+
+  prime_sudo
+  info "Installing $total items from Brewfile (large casks take a few minutes)..."
+  local i num t n failed=0
+  for ((i=0; i<total; i++)); do
+    num=$((i+1)); t="${BF_TYPES[$i]}"; n="${BF_NAMES[$i]}"
+    if { [ "$t" = brew ] && brew list --formula "$n" >/dev/null 2>&1; } ||
+       { [ "$t" = cask ] && brew list --cask "$n" >/dev/null 2>&1; }; then
+      printf "%s %s✓%s %-26.26s %s(already installed)%s\n" "$(draw_bar "$num" "$total")" "$c_green" "$c_nc" "$n" "$c_blue" "$c_nc"
+      continue
+    fi
+    install_item "$t" "$n" "$num" "$total" || failed=$((failed+1))
+  done
+  if [ "$failed" -eq 0 ]; then ok "Brewfile processed — all $total items"
+  else warn "Brewfile processed — $failed of $total item(s) failed (details above)"; fi
 }
 
 # ---- git --------------------------------------------------------------------

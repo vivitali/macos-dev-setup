@@ -18,18 +18,23 @@ chmod +x setup.sh
 Choose what gets installed by **editing the `Brewfile`** — comment a line to skip,
 uncomment items under `OPTIONAL` to add. That replaces the old `--minimal/--full` modes.
 
+The interactive run installs one item at a time behind a **live progress bar + spinner**
+(`[k/N]`, current app, elapsed seconds), so a long cask download never looks like a
+frozen terminal. `--yes` (or a non-TTY/CI) uses plain `brew bundle` instead.
+
 ## What you get
 
 | Area | Tools |
 |------|-------|
-| Core CLI | git, git-delta, **gh**, **lazygit**, mas |
-| Languages | **nvm** → Node LTS (+corepack), **uv** → Python, **go** |
+| Core CLI | git, git-delta, **gh**, **act**, **lazygit**, mas |
+| Languages | **nvm** → Node LTS (+corepack), **bun**, **uv** → Python, **go** |
 | Shell | starship + zsh-autosuggestions + zsh-syntax-highlighting |
 | Modern CLI | bat, eza, fd, fzf, ripgrep, jq, httpie, wget, btop |
 | Editor / Browsers | VS Code, Chrome, Firefox Dev Edition |
 | AI | **Claude desktop** + **Claude Code** (CLI) |
 | Terminal | **Ghostty** (free, no account) |
 | API / DB | **Bruno**, **DBeaver**, PostgreSQL 17 |
+| Cloud / Backend | **firebase-cli** (Firestore, emulators, deploy) |
 | Mobile | watchman, cocoapods, **Flutter**, **Android Studio**, JDK 17, Xcode¹ |
 | Productivity | Rectangle, Raycast, **Shottr** |
 

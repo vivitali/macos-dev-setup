@@ -7,12 +7,14 @@
 # ----------------------------------------------------------------------------
 brew "git"
 brew "git-delta"          # better git diffs (configured by setup.sh)
-brew "gh"                 # GitHub CLI (replaces GitHub Desktop)
+brew "gh"                 # GitHub CLI (PRs/issues/auth + GitHub Actions via `gh run`)
+brew "act"                # run GitHub Actions locally (needs a container runtime: OrbStack/Docker)
 brew "lazygit"            # fast git TUI
 brew "mas"                # Mac App Store CLI (for Xcode, see MOBILE)
 
 # Language runtimes / version managers
 brew "nvm"                # Node version manager (Node installed by setup.sh)
+brew "bun"                # fast JS runtime + package manager + bundler (Node-compatible)
 brew "uv"                 # Python: installer + venv + version manager (Astral)
 brew "go"                 # Go toolchain
 
@@ -63,6 +65,11 @@ cask "ghostty"
 cask "bruno"                        # local, git-friendly (replaces Postman)
 cask "dbeaver-community"            # free DB GUI (replaces TablePlus)
 brew "postgresql@17"                # not auto-started; see setup.sh notes
+
+# ----------------------------------------------------------------------------
+# Cloud / Backend
+# ----------------------------------------------------------------------------
+brew "firebase-cli"                 # Firebase + Firestore (local emulators, deploy); needs a Google account/project
 
 # ----------------------------------------------------------------------------
 # MOBILE — Flutter / React Native / iOS + Android

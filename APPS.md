@@ -9,7 +9,8 @@ the [`Brewfile`](Brewfile); the toolchain steps run from [`setup.sh`](setup.sh).
 |------|------|-----|
 | git | version control | base of everything |
 | git-delta | pretty diffs | configured as git pager by `setup.sh` |
-| gh | GitHub CLI | PRs/issues/auth from terminal (replaces GitHub Desktop) |
+| gh | GitHub CLI | PRs/issues/auth + GitHub Actions (`gh run`, `gh workflow`) |
+| act | GitHub Actions runner | run workflows locally; needs a container runtime (OrbStack/Docker) |
 | lazygit | git TUI | fast staging/branching |
 | mas | Mac App Store CLI | for installing Xcode |
 
@@ -18,6 +19,7 @@ the [`Brewfile`](Brewfile); the toolchain steps run from [`setup.sh`](setup.sh).
 | Tool | What | Notes |
 |------|------|-------|
 | nvm | Node version manager | `setup.sh` installs Node LTS + runs `corepack enable` (yarn/pnpm) |
+| bun | JS runtime + pkg manager | fast all-in-one runtime/bundler/test runner; Node-compatible |
 | uv | Python toolchain | installer + venv + version manager (Astral); replaces pyenv/pipenv/pip-tools |
 | go | Go toolchain | `~/go/bin` added to PATH |
 
@@ -66,6 +68,12 @@ the [`Brewfile`](Brewfile); the toolchain steps run from [`setup.sh`](setup.sh).
 - **DBeaver Community** — free multi-DB GUI (replaces TablePlus).
 - **PostgreSQL 17** — lean default DB engine. Not auto-started; run
   `brew services start postgresql@17` when needed.
+
+## Cloud / Backend
+
+- **firebase-cli** — Firebase + Cloud Firestore: local emulators (`firebase emulators:start`),
+  deploys, and project management. Provides the `firebase` command. Needs a Google
+  account/project; remove from the Brewfile if you don't use Firebase.
 
 ## Mobile (Flutter / React Native / iOS + Android)
 
